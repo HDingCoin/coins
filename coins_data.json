@@ -1,0 +1,36 @@
+[
+    {
+        "name": "咸丰重宝",
+        "currency": "SEK",
+        "price": "2000",
+        "platform": "",
+        "size": "",
+        "date": "2026-06-26",
+        "obverse_img": "/images/1782444280_obverse_img_621769993_90f797b7-5c5d-4683-b004-b5df28c68683.jpg",
+        "reverse_img": "/images/1782444280_reverse_img_621769993_827e9497-1c83-498a-b4b2-f4a12eee2c40.jpg",
+        "edge_img": "",
+        "notes": ""
+    },
+    {
+        "name": "嘉庆通宝",
+        "currency": "SEK",
+        "price": "0",
+        "platform": "",
+        "size": "",
+        "date": "2026-06-26",
+        "notes": "",
+        "obverse_img": "/images/1782444972_obverse_img_obverse.jpg",
+        "reverse_img": "/images/1782444972_reverse_img_reverse.jpg"
+    },
+    {
+        "name": "咸丰元宝",
+        "currency": "SEK",
+        "price": "0",
+        "platform": "",
+        "size": "",
+        "date": "2026-06-26",
+        "notes": "",
+        "obverse_img": "/images/1782445326_obverse_img_obverse.jpg",
+        "reverse_img": "/images/1782445326_reverse_img_reverse.jpg"
+    }
+]

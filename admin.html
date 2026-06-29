@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>泉府遗珍 · 藏品打理后台 (真实圆形抠图版)</title>
+    <style>
+        body { font-family: 'PingFang SC', sans-serif; background: #faf8f5; margin: 20px; color: #333; }
+        .top-nav { max-width: 1050px; margin: 0 auto 15px auto; display: flex; justify-content: space-between; align-items: center; }
+        .top-nav span { font-size: 13px; color: #666; }
+        .back-btn { background: #8c2d19; color: white; padding: 6px 12px; border-radius: 4px; text-decoration: none; font-size: 13px; font-weight: bold; }
+        
+        .container { max-width: 1050px; margin: 0 auto; display: grid; grid-template-columns: 1fr; gap: 20px; }
+        @media(min-width: 800px) { .container { grid-template-columns: 500px 1fr; } }
+        
+        .box { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border: 1px solid #eaeaea; height: fit-content; }
+        h2 { color: #8c2d19; margin-top: 0; font-size: 18px; border-bottom: 2px solid #8c2d19; padding-bottom: 6px; }
+        
+        label { display: block; margin-top: 10px; font-weight: bold; font-size: 13px; color: #555; }
+        input[type="text"], input[type="number"], textarea, select { width: 100%; padding: 8px; margin-top: 4px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; }
+        
+        .image-upload-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
+        .thumb-wrap { display: flex; flex-direction: column; align-items: center; position: relative; width: 100%; }
+        
+        .thumb-box { border: 1px dashed #ccc; border-radius: 6px; width: 100%; aspect-ratio: 1; position: relative; background: #fafafa; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: crosshair; overflow: hidden; }
+        .thumb-box img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.05s ease; pointer-events: none; }
+        .thumb-box span { font-size: 11px; color: #888; margin-top: 4px; text-align: center; pointer-events: none; }
+        .file-input { display: none; }
+        
+        .circle-lens { position: absolute; border: 1px solid #ff3b30; border-radius: 50%; box-shadow: 0 0 0 9999px rgba(0,0,0,0.5); pointer-events: none; display: none; box-sizing: border-box; }
+        .circle-lens::after { content: ''; position: absolute; top: 50%; left: 50%; width: 6px; height: 6px; background: #ff3b30; border-radius: 50%; transform: translate(-50%, -50%); }
+        .circle-lens::before { content: ''; position: absolute; top: 50%; left: 0; width: 100%; height: 1px; background: rgba(255, 59, 48, 0.4); transform: translateY(-50%); }
+        
+        .clear-main-btn { position: absolute; top: -5px; right: -5px; background: rgba(0,0,0,0.6); color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 11px; text-align: center; line-height: 18px; cursor: pointer; font-weight: bold; z-index: 10; display: none; }
+        
+        .control-panel { width: 100%; margin-top: 8px; background: #fdfaf7; padding: 6px; border-radius: 4px; border: 1px solid #ebdcd8; display: none; }
+        .control-panel.focused-panel { border-color: #ff3b30; background: #fff5f5; }
+        .control-row { display: flex; align-items: center; justify-content: space-between; font-size: 11px; margin-bottom: 4px; }
+        .control-row label { margin: 0; font-size: 11px; color: #777; width: 45px; }
+        .control-row input[type="range"] { flex-grow: 1; accent-color: #8c2d19; margin: 0 6px; height: 14px; }
+        .control-row span { font-weight: bold; color: #8c2d19; width: 35px; text-align: right; font-variant-numeric: tabular-nums; }
+
+        .extra-section { margin-top: 15px; background: #fdfcf7; padding: 10px; border-radius: 6px; border: 1px dashed #dfd7cb; }
+        .add-extra-btn { background: #ebdcd8; color: #8c2d19; border: 1px solid #8c2d19; padding: 4px 10px; border-radius: 4px; font-size: 12px; cursor: pointer; font-weight: bold; width: 100%; text-align: center; }
+        .extra-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+        .extra-thumb { width: 45px; height: 45px; border-radius: 4px; border: 1px solid #ddd; position: relative; overflow: hidden; }
+        .extra-thumb img { width: 100%; height: 100%; object-fit: cover; }
+        .extra-thumb .del-tag { position: absolute; top: 0; right: 0; background: rgba(217,83,79,0.9); color: white; width: 14px; height: 14px; font-size: 10px; text-align: center; line-height: 14px; cursor: pointer; font-weight: bold; }
+
+        .btn-group { margin-top: 20px; display: flex; gap: 10px; }
+        button.submit-btn { flex-grow: 1; background: #8c2d19; color: white; border: none; padding: 10px; border-radius: 4px; font-weight: bold; cursor: pointer; }
+        button.cancel-btn { background: #eee; color: #666; border: none; padding: 10px; border-radius: 4px; cursor: pointer; }
+
+        .coin-item { padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+        .coin-item:hover { background: #fdfbf7; }
+        .coin-item-left { cursor: pointer; flex-grow: 1; }
+        .coin-item-name { font-weight: bold; color: #333; }
+        .coin-item-meta { font-size: 11px; color: #999; margin-top: 2px; }
+    </style>
+</head>
+<body>
+
+<div class="top-nav">
+    <span>当前环境：本地大脑 (Flask 8000)</span>
+    <a href="/" class="back-btn">🏛️ 返回展览大厅</a>
+</div>
+
+<div class="container">
+    <div class="box">
+        <h2 id="formTitle">🪙 录入新藏品</h2>
+        <form id="coinForm" onsubmit="saveCoin(event)">
+            <input type="hidden" id="editIndex" value="-1">
+            
+            <label>钱币名称:</label>
+            <input type="text" id="cName" required placeholder="如：江南甲辰光绪元宝">
+            
+            <label>成交价格 & 币种:</label>
+            <div style="display: flex; gap: 5px;">
+                <input type="number" id="cPrice" step="0.01" required placeholder="0.00" style="flex-grow: 1;">
+                <select id="cCurrency" style="width: 80px;">
+                    <option value="CNY">CNY</option>
+                    <option value="SEK">SEK</option>
+                </select>
+            </div>
+            
+            <label>来源平台:</label>
+            <input type="text" id="cPlatform" placeholder="如：华夏古泉">
+            
+            <label>尺寸重量:</label>
+            <input type="text" id="cSize" placeholder="如：39.5mm / 26.7g">
+            
+            <label>描述备注:</label>
+            <textarea id="cNotes" rows="3" placeholder="版别、特征..."></textarea>
+            
+            <label style="color:#8c2d19;">标准三面图：</label>
+            <div class="image-upload-grid">
+                
+                <div class="thumb-wrap" id="wrapObv">
+                    <div class="clear-main-btn" id="clearObv" onclick="clearMainImage('Obv', event)">X</div>
+                    <div class="thumb-box" id="boxObv" onclick="handleBoxClick(this, 'Obv', event)">
+                        <img id="imgObvPreview" style="display:none;">
+                        <div class="circle-lens" id="lensObv"></div>
+                        <span id="txtObv">📸<br>正面</span>
+                    </div>
+                    <input type="file" id="fileObv" class="file-input" accept="image/*" onchange="previewImage(this, 'Obv')">
+                    
+                    <div class="control-panel" id="panelObv" tabindex="0">
+                        <div class="control-row"><label>旋转°</label><input type="range" id="rotObv" min="-180" max="180" step="0.5" value="0" oninput="updateLive('Obv')"><span id="valObv">0</span></div>
+                        <div class="control-row"><label>圆半径%</label><input type="range" id="radiusObv" min="1" max="100" step="0.1" value="42" oninput="updateLive('Obv')"><span id="valRadiusObv">42</span></div>
+                        <div class="control-row"><label>中心 X%</label><input type="range" id="cxObv" min="0" max="100" step="0.1" value="50" oninput="updateLive('Obv')"><span id="valCxObv">50</span></div>
+                        <div class="control-row"><label>中心 Y%</label><input type="range" id="cyObv" min="0" max="100" step="0.1" value="50" oninput="updateLive('Obv')"><span id="valCyObv">50</span></div>
+                    </div>
+                </div>
+                
+                <div class="thumb-wrap" id="wrapRev">
+                    <div class="clear-main-btn" id="clearRev" onclick="clearMainImage('Rev', event)">X</div>
+                    <div class="thumb-box" id="boxRev" onclick="handleBoxClick(this, 'Rev', event)">
+                        <img id="imgRevPreview" style="display:none;">
+                        <div class="circle-lens" id="lensRev"></div>
+                        <span id="txtRev">📸<br>反面</span>
+                    </div>
+                    <input type="file" id="fileRev" class="file-input" accept="image/*" onchange="previewImage(this, 'Rev')">
+                    
+                    <div class="control-panel" id="panelRev" tabindex="0">
+                        <div class="control-row"><label>旋转°</label><input type="range" id="rotRev" min="-180" max="180" step="0.5" value="0" oninput="updateLive('Rev')"><span id="valRev">0</span></div>
+                        <div class="control-row"><label>圆半径%</label><input type="range" id="radiusRev" min="1" max="100" step="0.1" value="42" oninput="updateLive('Rev')"><span id="valRadiusRev">42</span></div>
+                        <div class="control-row"><label>中心 X%</label><input type="range" id="cxRev" min="0" max="100" step="0.1" value="50" oninput="updateLive('Rev')"><span id="valCxRev">50</span></div>
+                        <div class="control-row"><label>中心 Y%</label><input type="range" id="cyRev" min="0" max="100" step="0.1" value="50" oninput="updateLive('Rev')"><span id="valCyRev">50</span></div>
+                    </div>
+                </div>
+                
+                <div class="thumb-wrap" id="wrapEdge">
+                    <div class="clear-main-btn" id="clearEdge" onclick="clearMainImage('Edge', event)">X</div>
+                    <div class="thumb-box" id="boxEdge" onclick="document.getElementById('fileEdge').click()">
+                        <img id="imgEdgePreview" style="display:none;">
+                        <span id="txtEdge">📸<br>边齿</span>
+                    </div>
+                    <input type="file" id="fileEdge" class="file-input" accept="image/*" onchange="previewImage(this, 'Edge')">
+                    
+                    <div class="control-panel" id="panelEdge">
+                        <div class="control-row"><label>旋转°</label><input type="range" id="rotEdge" min="-180" max="180" step="0.5" value="0" oninput="updateLive('Edge')"><span id="valEdge">0</span></div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="extra-section">
+                <div class="add-extra-btn" onclick="triggerExtraUpload()">➕ 增加细节特写照</div>
+                <div id="extraList" class="extra-list"></div>
+                <div id="extraFilesContainer" style="display: none;"></div>
+            </div>
+            
+            <div class="btn-group">
+                <button type="button" class="cancel-btn" onclick="resetForm()">重置</button>
+                <button type="submit" class="submit-btn">💾 套圈抠图并保存</button>
+            </div>
+        </form>
+    </div>
+    
+    <div class="box">
+        <h2>📦 泉府藏泉总账本 (<span id="coinCount">0</span>)</h2>
+        <div id="coinList"></div>
+    </div>
+</div>
+
+<script>
+    let coinList = [];
+    let extraImagesUploaded = [];
+    let extraFileCounter = 0;
+    let mainImagesStatus = { obvCleared: false, revCleared: false, edgeCleared: false, obvHasFile: false, revHasFile: false, edgeHasFile: false };
+
+    function fetchCoins() {
+        fetch('/api/coins').then(res => res.json()).then(data => { coinList = data; renderList(); });
+    }
+
+    function renderList() {
+        document.getElementById('coinCount').innerText = coinList.length;
+        const container = document.getElementById('coinList');
+        container.innerHTML = coinList.length === 0 ? '<div style="color:#999;text-align:center;padding:30px;">账本空空如也</div>' : '';
+        
+        coinList.forEach((coin, index) => {
+            const div = document.createElement('div');
+            div.className = 'coin-item';
+            div.innerHTML = `
+                <div class="coin-item-left" onclick="editCoin(${index})">
+                    <div class="coin-item-name">${coin.name}</div>
+                    <div class="coin-item-meta">${coin.date || ''} | ${coin.price} ${coin.currency} | ${coin.platform || '未知'}</div>
+                </div>
+                <div class="action-btns"><button style="background:#d9534f;color:white;border:none;padding:3px 8px;border-radius:3px;cursor:pointer;font-size:11px;" onclick="deleteCoin(event, ${index})">删除</button></div>`;
+            container.appendChild(div);
+        });
+    }
+
+    function previewImage(input, type) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.getElementById(`img${type}Preview`);
+                img.src = e.target.result;
+                img.style.display = 'block';
+                document.getElementById(`txt${type}`).style.display = 'none';
+                document.getElementById(`clear${type}`).style.display = 'block';
+                document.getElementById(`panel${type}`).style.display = 'block';
+                
+                mainImagesStatus[`${type.toLowerCase()}Cleared`] = false;
+                mainImagesStatus[`${type.toLowerCase()}HasFile`] = true;
+                
+                document.getElementById(`rot${type}`).value = 0;
+                if(type !== 'Edge') {
+                    document.getElementById(`radius${type}`).value = 42;
+                    document.getElementById(`cx${type}`).value = 50;
+                    document.getElementById(`cy${type}`).value = 50;
+                    document.getElementById(`lens${type}`).style.display = 'block';
+                }
+                updateLive(type);
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function clearMainImage(type, event) {
+        if(event) event.stopPropagation();
+        document.getElementById(`file${type}`).value = "";
+        document.getElementById(`img${type}Preview`).src = "";
+        document.getElementById(`img${type}Preview`).style.display = "none";
+        document.getElementById(`txt${type}`).style.display = "block";
+        document.getElementById(`clear${type}`).style.display = "none";
+        document.getElementById(`panel${type}`).style.display = "none";
+        if(type !== 'Edge') document.getElementById(`lens${type}`).style.display = 'none';
+        
+        mainImagesStatus[`${type.toLowerCase()}Cleared`] = true;
+        mainImagesStatus[`${type.toLowerCase()}HasFile`] = false;
+    }
+
+    function handleBoxClick(boxElement, type, event) {
+        if (!mainImagesStatus[`${type.toLowerCase()}HasFile`]) {
+            document.getElementById(`file${type}`).click();
+            return;
+        }
+
+        const rect = boxElement.getBoundingClientRect();
+        let pctX = ((event.clientX - rect.left) / rect.width) * 100;
+        let pctY = ((event.clientY - rect.top) / rect.height) * 100;
+
+        pctX = Math.max(0, Math.min(100, pctX));
+        pctY = Math.max(0, Math.min(100, pctY));
+
+        document.getElementById(`cx${type}`).value = pctX.toFixed(2);
+        document.getElementById(`cy${type}`).value = pctY.toFixed(2);
+
+        updateLive(type);
+    }
+
+    function updateLive(type) {
+        const angle = document.getElementById(`rot${type}`).value;
+        document.getElementById(`val${type}`).innerText = parseFloat(angle).toFixed(1);
+        document.getElementById(`img${type}Preview`).style.transform = `rotate(${angle}deg)`;
+        
+        if (type !== 'Edge') {
+            const r = document.getElementById(`radius${type}`).value;
+            const cx = document.getElementById(`cx${type}`).value;
+            const cy = document.getElementById(`cy${type}`).value;
+            
+            document.getElementById(`valRadius${type}`).innerText = parseFloat(r).toFixed(1);
+            if(document.getElementById(`valCx${type}`)) document.getElementById(`valCx${type}`).innerText = parseFloat(cx).toFixed(1);
+            if(document.getElementById(`valCy${type}`)) document.getElementById(`valCy${type}`).innerText = parseFloat(cy).toFixed(1);
+            
+            const lens = document.getElementById(`lens${type}`);
+            lens.style.width = (r * 2) + '%';
+            lens.style.height = (r * 2) + '%';
+            lens.style.left = (cx - r) + '%';
+            lens.style.top = (cy - r) + '%';
+        }
+    }
+
+    function setupMicroControls(type) {
+        const box = document.getElementById(`box${type}`);
+        const panel = document.getElementById(`panel${type}`);
+
+        if(!box || !panel) return;
+
+        box.addEventListener('wheel', function(e) {
+            if (!mainImagesStatus[`${type.toLowerCase()}HasFile`]) return;
+            e.preventDefault();
+
+            const radiusInput = document.getElementById(`radius${type}`);
+            let currentR = parseFloat(radiusInput.value);
+            
+            if(e.deltaY < 0) {
+                currentR = Math.min(100, currentR + 0.1);
+            } else {
+                currentR = Math.max(1, currentR - 0.1);
+            }
+            
+            radiusInput.value = currentR.toFixed(2);
+            updateLive(type);
+        }, { passive: false });
+
+        panel.addEventListener('keydown', function(e) {
+            if (!mainImagesStatus[`${type.toLowerCase()}HasFile`]) return;
+            
+            const cxInput = document.getElementById(`cx${type}`);
+            const cyInput = document.getElementById(`cy${type}`);
+            let cx = parseFloat(cxInput.value);
+            let cy = parseFloat(cyInput.value);
+            const step = 0.05; 
+
+            let handled = false;
+            if (e.key === 'ArrowUp' || e.key === 'w') { cy = Math.max(0, cy - step); handled = true; }
+            if (e.key === 'ArrowDown' || e.key === 's') { cy = Math.min(100, cy + step); handled = true; }
+            if (e.key === 'ArrowLeft' || e.key === 'a') { cx = Math.max(0, cx - step); handled = true; }
+            if (e.key === 'ArrowRight' || e.key === 'd') { cx = Math.min(100, cx + step); handled = true; }
+
+            if(handled) {
+                e.preventDefault();
+                cxInput.value = cx.toFixed(2);
+                cyInput.value = cy.toFixed(2);
+                updateLive(type);
+            }
+        });
+
+        panel.addEventListener('focus', () => panel.classList.add('focused-panel'));
+        panel.addEventListener('blur', () => panel.classList.remove('focused-panel'));
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        setupMicroControls('Obv');
+        setupMicroControls('Rev');
+    });
+
+    function triggerExtraUpload() {
+        extraFileCounter++;
+        const id = `extra_file_${extraFileCounter}`;
+        const input = document.createElement('input');
+        input.type = 'file'; input.id = id; input.accept = 'image/*';
+        input.onchange = function() {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const thumb = document.createElement('div');
+                    thumb.className = 'extra-thumb'; thumb.id = `thumb_${id}`;
+                    thumb.innerHTML = `<img src="${e.target.result}"><div class="del-tag" onclick="removeSelectedExtra('${id}')">X</div>`;
+                    document.getElementById('extraList').appendChild(thumb);
+                };
+                reader.readAsDataURL(input.files[0]);
+                document.getElementById('extraFilesContainer').appendChild(input);
+            }
+        };
+        input.click();
+    }
+
+    function removeSelectedExtra(id) { document.getElementById(`thumb_${id}`).remove(); document.getElementById(id).remove(); }
+    function removeExistingExtra(path, thumbId) { document.getElementById(thumbId).remove(); extraImagesUploaded = extraImagesUploaded.filter(p => p !== path); }
+
+    function editCoin(index) {
+        resetForm();
+        const coin = coinList[index];
+        document.getElementById('formTitle').innerText = "⚙️ 编辑与AI抠图";
+        document.getElementById('editIndex').value = index;
+        
+        document.getElementById('cName').value = coin.name || '';
+        document.getElementById('cPrice').value = coin.price || '';
+        document.getElementById('cCurrency').value = coin.currency || 'CNY';
+        document.getElementById('cPlatform').value = coin.platform || '';
+        document.getElementById('cSize').value = coin.size || '';
+        document.getElementById('cNotes').value = coin.notes || '';
+        
+        let fixPath = (p) => p ? (p.startsWith('/') ? p : '/' + p) : "";
+        
+        if(coin.obverse_img) {
+            mainImagesStatus.obvHasFile = true;
+            const img = document.getElementById('imgObvPreview');
+            img.src = fixPath(coin.obverse_raw_path || coin.obverse_img); 
+            img.style.display = 'block';
+            document.getElementById('txtObv').style.display = 'none';
+            document.getElementById('clearObv').style.display = 'block';
+            document.getElementById('panelObv').style.display = 'block';
+            document.getElementById('lensObv').style.display = 'block';
+            document.getElementById('rotObv').value = coin.angle_obv || 0;
+            document.getElementById('radiusObv').value = coin.obv_crop_r || 42;
+            document.getElementById('cxObv').value = coin.obv_crop_x || 50;
+            document.getElementById('cyObv').value = coin.obv_crop_y || 50;
+            updateLive('Obv');
+        }
+        if(coin.reverse_img) {
+            mainImagesStatus.revHasFile = true;
+            const img = document.getElementById('imgRevPreview');
+            img.src = fixPath(coin.reverse_raw_path || coin.reverse_img); 
+            img.style.display = 'block';
+            document.getElementById('txtRev').style.display = 'none';
+            document.getElementById('clearRev').style.display = 'block';
+            document.getElementById('panelRev').style.display = 'block';
+            document.getElementById('lensRev').style.display = 'block';
+            document.getElementById('rotRev').value = coin.angle_rev || 0;
+            document.getElementById('radiusRev').value = coin.rev_crop_r || 42;
+            document.getElementById('cxRev').value = coin.rev_crop_x || 50;
+            document.getElementById('cyRev').value = coin.rev_crop_y || 50;
+            updateLive('Rev');
+        }
+        if(coin.edge_img) {
+            mainImagesStatus.edgeHasFile = true;
+            const img = document.getElementById('imgEdgePreview');
+            img.src = fixPath(coin.edge_img); img.style.display = 'block';
+            document.getElementById('txtEdge').style.display = 'none';
+            document.getElementById('clearEdge').style.display = 'block';
+            document.getElementById('panelEdge').style.display = 'block';
+            document.getElementById('rotEdge').value = coin.angle_edge || 0;
+            updateLive('Edge');
+        }
+        
+        if (coin.extra_imgs) {
+            extraImagesUploaded = [...coin.extra_imgs];
+            coin.extra_imgs.forEach((path, i) => {
+                const thumbId = `exist_extra_${i}`;
+                const thumb = document.createElement('div');
+                thumb.className = 'extra-thumb'; thumb.id = thumbId;
+                thumb.innerHTML = `<img src="${fixPath(path)}"><div class="del-tag" onclick="removeExistingExtra('${path}', '${thumbId}')">X</div>`;
+                document.getElementById('extraList').appendChild(thumb);
+            });
+        }
+    }
+
+    function saveCoin(event) {
+        event.preventDefault();
+        const index = document.getElementById('editIndex').value;
+        const formData = new FormData();
+        
+        formData.append('name', document.getElementById('cName').value);
+        formData.append('price', document.getElementById('cPrice').value);
+        formData.append('currency', document.getElementById('cCurrency').value);
+        formData.append('platform', document.getElementById('cPlatform').value);
+        formData.append('size', document.getElementById('cSize').value);
+        formData.append('notes', document.getElementById('cNotes').value);
+        
+        formData.append('angle_obv', document.getElementById('rotObv').value);
+        formData.append('angle_rev', document.getElementById('rotRev').value);
+        formData.append('angle_edge', document.getElementById('rotEdge').value);
+        
+        formData.append('obv_crop_x', document.getElementById('cxObv').value);
+        formData.append('obv_crop_y', document.getElementById('cyObv').value);
+        formData.append('obv_crop_r', document.getElementById('radiusObv').value);
+        
+        formData.append('rev_crop_x', document.getElementById('cxRev').value);
+        formData.append('rev_crop_y', document.getElementById('cyRev').value);
+        formData.append('rev_crop_r', document.getElementById('radiusRev').value);
+        
+        formData.append('obv_crop_active', mainImagesStatus.obvHasFile);
+        formData.append('rev_crop_active', mainImagesStatus.revHasFile);
+        
+        formData.append('obv_cleared', mainImagesStatus.obvCleared);
+        formData.append('rev_cleared', mainImagesStatus.revCleared);
+        formData.append('edge_cleared', mainImagesStatus.edgeCleared);
+        
+        const fileObv = document.getElementById('fileObv').files[0];
+        const fileRev = document.getElementById('fileRev').files[0];
+        const fileEdge = document.getElementById('fileEdge').files[0];
+        
+        if(fileObv) formData.append('obverse_img', fileObv);
+        if(fileRev) formData.append('reverse_img', fileRev);
+        if(fileEdge) formData.append('edge_img', fileEdge);
+        
+        const extraFileInputs = document.getElementById('extraFilesContainer').querySelectorAll('input');
+        extraFileInputs.forEach(input => { if(input.files[0]) formData.append('extra_imgs', input.files[0]); });
+
+        if(index !== "-1") {
+            formData.append('edit_index', index);
+            formData.append('keep_extra_imgs', JSON.stringify(extraImagesUploaded));
+        }
+
+        fetch('/api/coins', { method: 'POST', body: formData })
+        .then(res => res.json())
+        .then(data => { 
+            if(data.status === 'success') { 
+                alert('🎉 藏品保存并物理套圈抠图成功！');
+                resetForm(); 
+                fetchCoins(); 
+            } else {
+                alert('保存失败: ' + data.message);
+            }
+        }).catch(err => {
+            alert('网络错误，抠大图可能需要几秒，请检查后端');
+            console.error(err);
+        });
+    }
+
+    function deleteCoin(event, index) {
+        event.stopPropagation();
+        if(confirm('确定要删除这枚硬币及所有关联的细节图吗？')) {
+            fetch('/api/delete-coin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ index }) }).then(res => res.json()).then(data => { if(data.success) fetchCoins(); });
+        }
+    }
+
+    function resetForm() {
+        document.getElementById('coinForm').reset();
+        document.getElementById('editIndex').value = "-1";
+        document.getElementById('formTitle').innerText = "🪙 录入新藏品";
+        
+        ['Obv', 'Rev', 'Edge'].forEach(type => {
+            document.getElementById(`img${type}Preview`).style.display='none'; document.getElementById(`txt${type}`).style.display='block';
+            document.getElementById(`clear${type}`).style.display='none'; document.getElementById(`panel${type}`).style.display='none';
+            document.getElementById(`img${type}Preview`).style.transform = 'rotate(0deg)';
+            document.getElementById(`val${type}`).innerText = 0;
+            if(type !== 'Edge') document.getElementById(`lens${type}`).style.display = 'none';
+        });
+        
+        document.getElementById('extraList').innerHTML = '';
+        document.getElementById('extraFilesContainer').innerHTML = '';
+        extraImagesUploaded = []; extraFileCounter = 0;
+        mainImagesStatus = { obvCleared: false, revCleared: false, edgeCleared: false, obvHasFile: false, revHasFile: false, edgeHasFile: false };
+    }
+
+    fetchCoins();
+</script>
+</body>
+</html>
